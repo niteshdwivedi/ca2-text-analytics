@@ -1,30 +1,7 @@
 import streamlit as st
 import joblib
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
 import os
-
-# Download NLTK resources
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
-
-try:
-    nltk.data.find('corpora/wordnet')
-except LookupError:
-    nltk.download('wordnet')
-
-# Initialize preprocessing tools
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words('english'))
+from preprocessing_utils import TextPreprocessor
 
 # Load saved models
 @st.cache_resource
@@ -41,11 +18,7 @@ def load_models():
 # Preprocessing function
 def preprocess_text(text):
     """Complete preprocessing pipeline"""
-    text = text.lower()
-    tokens = word_tokenize(text)
-    tokens = [token for token in tokens if token.isalpha() and token not in stop_words]
-    tokens = [lemmatizer.lemmatize(token) for token in tokens]
-    return ' '.join(tokens)
+    return TextPreprocessor.preprocess_text(text)
 
 # Streamlit app
 st.set_page_config(page_title="IMDB Sentiment Classifier", layout="wide")

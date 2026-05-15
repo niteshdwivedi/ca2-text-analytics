@@ -9,26 +9,40 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 import re
 
-# Download NLTK resources
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+def ensure_nltk_resource(resource_paths, package_name):
+    """Download an NLTK package only when none of its expected paths exist."""
+    for resource_path in resource_paths:
+        try:
+            nltk.data.find(resource_path)
+            return
+        except LookupError:
+            continue
+    nltk.download(package_name)
 
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
 
-try:
-    nltk.data.find('corpora/wordnet')
-except LookupError:
-    nltk.download('wordnet')
+# Download NLTK resources when they are missing.
+ensure_nltk_resource(('tokenizers/punkt', 'tokenizers/punkt.zip'), 'punkt')
+ensure_nltk_resource(('tokenizers/punkt_tab', 'tokenizers/punkt_tab.zip'), 'punkt_tab')
+ensure_nltk_resource(('corpora/stopwords', 'corpora/stopwords.zip'), 'stopwords')
+ensure_nltk_resource(('corpora/wordnet', 'corpora/wordnet.zip'), 'wordnet')
 
 # Initialize preprocessing tools
 STEMMER = PorterStemmer()
 LEMMATIZER = WordNetLemmatizer()
 STOP_WORDS = set(stopwords.words('english'))
+
+RATING_PHRASE_EXPANSIONS = (
+    (r'\b(?:5|five)\s*(?:/|out\s+of)\s*(?:5|five)(?:[\s-]*stars?)?\b', 'excellent amazing'),
+    (r'\b(?:4|four)\s*(?:/|out\s+of)\s*(?:5|five)(?:[\s-]*stars?)?\b', 'good enjoyable'),
+    (r'\b(?:3|three)\s*(?:/|out\s+of)\s*(?:5|five)(?:[\s-]*stars?)?\b', 'average okay'),
+    (r'\b(?:2|two)\s*(?:/|out\s+of)\s*(?:5|five)(?:[\s-]*stars?)?\b', 'bad disappointing'),
+    (r'\b(?:1|one|0|zero)\s*(?:/|out\s+of)\s*(?:5|five)(?:[\s-]*stars?)?\b', 'terrible awful'),
+    (r'\b(?:5|five)[\s-]*stars?\b', 'excellent amazing'),
+    (r'\b(?:4|four)[\s-]*stars?\b', 'good enjoyable'),
+    (r'\b(?:3|three)[\s-]*stars?\b', 'average okay'),
+    (r'\b(?:2|two)[\s-]*stars?\b', 'bad disappointing'),
+    (r'\b(?:1|one|0|zero)[\s-]*stars?\b', 'terrible awful'),
+)
 
 class TextPreprocessor:
     """
@@ -40,6 +54,13 @@ class TextPreprocessor:
     def lowercase(text):
         """Convert text to lowercase"""
         return text.lower()
+
+    @staticmethod
+    def expand_rating_phrases(text):
+        """Convert common star-rating phrases into sentiment-bearing words."""
+        for pattern, replacement in RATING_PHRASE_EXPANSIONS:
+            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        return text
     
     @staticmethod
     def remove_html(text):
@@ -90,7 +111,8 @@ class TextPreprocessor:
         Basic preprocessing: Lowercase, Tokenize, Remove Stopwords
         Suitable for TF-IDF and BoW approaches
         """
-        # Step 1: Lowercase
+        # Step 1: Normalize common rating phrases, then lowercase
+        text = TextPreprocessor.expand_rating_phrases(text)
         text = TextPreprocessor.lowercase(text)
         
         # Step 2: Remove HTML (if present)
