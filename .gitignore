@@ -1,0 +1,41 @@
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/
+*.cache
+
+# Model files (optional - for testing)
+# models/*.pkl
+
+# Data files (optional - use only processed data)
+*.csv
+
+# Misc
+.env
+*.log
+dist/
+build/
+*.egg-info/
